@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dual Microphone Recorder</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1e1e2f;
+            color: #ffffff;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            color: #00e5ff;
+            margin-bottom: 30px;
+        }
+
+        #permission-section {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .container {
+            display: flex;
+            gap: 40px;
+            margin-bottom: 40px;
+            width: 100%;
+            max-width: 900px;
+            justify-content: center;
+        }
+
+        .user-card {
+            background-color: #2a2a40;
+            border-radius: 10px;
+            padding: 20px;
+            width: 100%;
+            max-width: 350px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            border: 2px solid #3a3a5a;
+        }
+
+        .user-card h2 {
+            margin-top: 0;
+            color: #ffaa00;
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+
+        select,
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            margin-bottom: 20px;
+            background-color: #1a1a2e;
+            color: white;
+            border: 1px solid #555;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+
+        /* Visualizer styling */
+        .visualizer-container {
+            width: 100%;
+            height: 20px;
+            background-color: #111;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 10px;
+            position: relative;
+        }
+
+        .visualizer-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #00ff00, #ffff00, #ff0000);
+            transition: width 0.05s ease;
+        }
+
+        .test-label {
+            font-size: 12px;
+            color: #aaa;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .controls {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background-color: #00e5ff;
+            color: #000;
+        }
+
+        .btn-primary:hover {
+            background-color: #00b3cc;
+        }
+
+        .btn-record {
+            background-color: #ff3366;
+            color: white;
+            font-size: 20px;
+            padding: 15px 40px;
+            border-radius: 50px;
+        }
+
+        .btn-record:hover {
+            background-color: #cc0033;
+        }
+
+        .btn-record.recording {
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(255, 51, 102, 0.7);
+            }
+
+            70% {
+                box-shadow: 0 0 0 20px rgba(255, 51, 102, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 51, 102, 0);
+            }
+        }
+
+        .result-section {
+            margin-top: 15px;
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        audio {
+            width: 100%;
+            height: 30px;
+        }
+
+        a.download-btn {
+            display: block;
+            text-align: center;
+            background-color: #4CAF50;
+            color: white;
+            text-decoration: none;
+            padding: 8px;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        a.download-btn:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Dual Microphone Recorder</h1>
+
+    <div id="permission-section">
+        <p>This app requires microphone access to list and record your devices.</p>
+        <button id="btn-request-mic" class="btn-primary">Grant Microphone Access</button>
+    </div>
+
+    <div style="text-align: center; width: 100%;">
+        <button id="btn-refresh" class="btn-primary" style="margin-bottom: 20px; display: none;">Refresh Microphone
+            List</button>
+    </div>
+
+    <div class="container" style="display: none;" id="main-interface">
+
+        <!-- User 1 Card -->
+        <div class="user-card">
+            <input type="text" id="name1" value="User 1">
+            <label>Select Microphone:</label>
+            <select id="mic1-select">
+                <option value="">-- Select Device --</option>
+            </select>
+
+            <div class="test-label">Mic Test (Speak to check mapping)</div>
+            <div class="visualizer-container">
+                <div class="visualizer-bar" id="viz1"></div>
+            </div>
+
+            <div class="result-section" id="result1">
+                <audio id="audio1" controls></audio>
+                <a id="download1" class="download-btn" download="User1_Audio.webm">Download Audio</a>
+            </div>
+        </div>
+
+        <!-- User 2 Card -->
+        <div class="user-card">
+            <input type="text" id="name2" value="User 2">
+            <label>Select Microphone:</label>
+            <select id="mic2-select">
+                <option value="">-- Select Device --</option>
+            </select>
+
+            <div class="test-label">Mic Test (Speak to check mapping)</div>
+            <div class="visualizer-container">
+                <div class="visualizer-bar" id="viz2"></div>
+            </div>
+
+            <div class="result-section" id="result2">
+                <audio id="audio2" controls></audio>
+                <a id="download2" class="download-btn" download="User2_Audio.webm">Download Audio</a>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="controls" style="display: none;" id="record-controls">
+        <button id="btn-master-record" class="btn-record">Start Recording</button>
+    </div>
+
+    <script>
+        const btnRequestMic = document.getElementById('btn-request-mic');
+        const btnRefresh = document.getElementById('btn-refresh');
+        const mainInterface = document.getElementById('main-interface');
+        const recordControls = document.getElementById('record-controls');
+        const btnMasterRecord = document.getElementById('btn-master-record');
+
+        const mic1Select = document.getElementById('mic1-select');
+        const mic2Select = document.getElementById('mic2-select');
+
+        let audioContext;
+        let user1Stream = null;
+        let user2Stream = null;
+
+        let recorder1 = null;
+        let recorder2 = null;
+        let chunks1 = [];
+        let chunks2 = [];
+
+        let isRecording = false;
+
+        // Visualizer animation frame IDs
+        let anim1, anim2;
+
+        btnRequestMic.addEventListener('click', async () => {
+            try {
+                // Request generic audio permission to unlock device labels
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+                document.getElementById('permission-section').style.display = 'none';
+                btnRefresh.style.display = 'inline-block';
+                mainInterface.style.display = 'flex';
+                recordControls.style.display = 'block';
+
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+                await populateMicList();
+
+                // Now stop the initial generic stream
+                stream.getTracks().forEach(t => t.stop());
+            } catch (err) {
+                alert("Microphone permission denied or no microphones found.");
+                console.error(err);
+            }
+        });
+
+        btnRefresh.addEventListener('click', async () => {
+            btnRefresh.textContent = "Refreshing...";
+            // Temporarily grab a stream to ensure hardware refresh
+            try {
+                const tempStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                await populateMicList();
+                tempStream.getTracks().forEach(t => t.stop());
+            } catch (err) {
+                await populateMicList();
+            }
+            btnRefresh.textContent = "Refresh Microphone List";
+        });
+
+        navigator.mediaDevices.ondevicechange = () => {
+            if (mainInterface.style.display === 'flex') {
+                populateMicList();
+            }
+        };
+
+        async function populateMicList() {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const audioInputs = devices.filter(d => d.kind === 'audioinput');
+            console.log(audioInputs);
+            // Save current selections to restore them after refresh if they still exist
+            const val1 = mic1Select.value;
+            const val2 = mic2Select.value;
+
+            mic1Select.innerHTML = '<option value="">-- Select Device --</option>';
+            mic2Select.innerHTML = '<option value="">-- Select Device --</option>';
+
+            // Aggressive deduplication: Chrome and Edge often expose multiple driver-level endpoints 
+            // for the exact same physical microphone, and sometimes give them different groupIds!
+            const seenGroups = new Set();
+            const seenLabels = new Set();
+
+            audioInputs.forEach(device => {
+                if (device.deviceId === 'default' || device.deviceId === 'communications') {
+                    return; // Skip standard virtual IDs
+                }
+
+                // Some browsers/environments hash the deviceId, but the label gives it away
+                if (device.label && (device.label.startsWith('Default') || device.label.startsWith('Communications'))) {
+                    return;
+                }
+
+                // If we've already added a device from this physical hardware group, skip it.
+                if (device.groupId && seenGroups.has(device.groupId)) {
+                    return;
+                }
+
+                // Deduplicate by base hardware name (stripping out virtual prefixes just in case)
+                const baseLabel = device.label.replace(/^(Default - |Communications - )/, '').trim();
+
+                if (baseLabel && seenLabels.has(baseLabel)) {
+                    return;
+                }
+
+                if (device.groupId) seenGroups.add(device.groupId);
+                if (baseLabel) seenLabels.add(baseLabel);
+
+                const label = device.label || `Microphone ${device.deviceId.substring(0, 5)}...`;
+                const option1 = new Option(label, device.deviceId);
+                const option2 = new Option(label, device.deviceId);
+                mic1Select.add(option1);
+                mic2Select.add(option2);
+            });
+
+            // Restore selection if possible
+            Array.from(mic1Select.options).forEach(opt => { if (opt.value === val1) mic1Select.value = val1; });
+            Array.from(mic2Select.options).forEach(opt => { if (opt.value === val2) mic2Select.value = val2; });
+        }
+
+        async function setupMicStream(deviceId, userIndex) {
+            if (!deviceId) return null;
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    audio: { deviceId: { exact: deviceId } }
+                });
+
+                setupVisualizer(stream, userIndex);
+                return stream;
+            } catch (err) {
+                console.error("Error setting up mic:", err);
+                alert("Failed to access selected microphone.");
+                return null;
+            }
+        }
+
+        function setupVisualizer(stream, userIndex) {
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+
+            const analyser = audioContext.createAnalyser();
+            const source = audioContext.createMediaStreamSource(stream);
+            source.connect(analyser);
+            analyser.fftSize = 256;
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+
+            const bar = document.getElementById(`viz${userIndex}`);
+
+            function draw() {
+                if (userIndex === 1) anim1 = requestAnimationFrame(draw);
+                else anim2 = requestAnimationFrame(draw);
+
+                analyser.getByteFrequencyData(dataArray);
+
+                // Find the peak amplitude (much more visibly responsive than averaging all frequencies)
+                let max = 0;
+                for (let i = 0; i < bufferLength; i++) {
+                    if (dataArray[i] > max) max = dataArray[i];
+                }
+
+                // max goes up to 255
+                const width = (max / 255) * 100;
+                bar.style.width = width + '%';
+            }
+            draw();
+        }
+
+        mic1Select.addEventListener('change', async (e) => {
+            if (user1Stream) user1Stream.getTracks().forEach(t => t.stop());
+            if (anim1) cancelAnimationFrame(anim1);
+            document.getElementById('viz1').style.width = '0%';
+
+            user1Stream = await setupMicStream(e.target.value, 1);
+        });
+
+        mic2Select.addEventListener('change', async (e) => {
+            if (user2Stream) user2Stream.getTracks().forEach(t => t.stop());
+            if (anim2) cancelAnimationFrame(anim2);
+            document.getElementById('viz2').style.width = '0%';
+
+            user2Stream = await setupMicStream(e.target.value, 2);
+        });
+
+        btnMasterRecord.addEventListener('click', () => {
+            if (!isRecording) {
+                startRecording();
+            } else {
+                stopRecording();
+            }
+        });
+
+        function startRecording() {
+            if (!user1Stream && !user2Stream) {
+                alert("Please select at least one microphone.");
+                return;
+            }
+            if (audioContext.state === 'suspended') audioContext.resume();
+
+            chunks1 = [];
+            chunks2 = [];
+
+            if (user1Stream) {
+                recorder1 = new MediaRecorder(user1Stream);
+                recorder1.ondataavailable = e => chunks1.push(e.data);
+                recorder1.onstop = () => createOutput(1, chunks1);
+                recorder1.start();
+                document.getElementById('result1').style.display = 'none';
+            }
+
+            if (user2Stream) {
+                recorder2 = new MediaRecorder(user2Stream);
+                recorder2.ondataavailable = e => chunks2.push(e.data);
+                recorder2.onstop = () => createOutput(2, chunks2);
+                recorder2.start();
+                document.getElementById('result2').style.display = 'none';
+            }
+
+            isRecording = true;
+            btnMasterRecord.textContent = "Stop Recording";
+            btnMasterRecord.classList.add('recording');
+        }
+
+        function stopRecording() {
+            if (recorder1 && recorder1.state !== 'inactive') recorder1.stop();
+            if (recorder2 && recorder2.state !== 'inactive') recorder2.stop();
+
+            isRecording = false;
+            btnMasterRecord.textContent = "Start Recording";
+            btnMasterRecord.classList.remove('recording');
+        }
+
+        function createOutput(userIndex, chunks) {
+            const blob = new Blob(chunks, { type: 'audio/webm' });
+            const url = URL.createObjectURL(blob);
+
+            const audioEl = document.getElementById(`audio${userIndex}`);
+            audioEl.src = url;
+
+            const nameInput = document.getElementById(`name${userIndex}`).value || `User${userIndex}`;
+            const downloadEl = document.getElementById(`download${userIndex}`);
+            downloadEl.href = url;
+            downloadEl.download = `${nameInput.replace(/\s+/g, '_')}_Audio.webm`;
+
+            document.getElementById(`result${userIndex}`).style.display = 'flex';
+        }
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const audioInputs = devices.filter(d => d.kind === 'audioinput');
+
+                if (audioInputs.length > 0 && audioInputs[0].label !== '') {
+                    // Permissions were already granted in a previous session
+                    document.getElementById('permission-section').style.display = 'none';
+                    document.getElementById('btn-refresh').style.display = 'inline-block';
+                    document.getElementById('main-interface').style.display = 'flex';
+                    document.getElementById('record-controls').style.display = 'block';
+
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    await populateMicList();
+                } else {
+                    // No permissions yet. Show the dropdowns anyway with generic generic names
+                    // They will still see the "Grant Microphone Access" button at the top
+                    document.getElementById('main-interface').style.display = 'flex';
+                    await populateMicList();
+                }
+            } catch (err) {
+                console.error("Error populating mics on load:", err);
+            }
+        });
+    </script>
+</body>
+
+</html>
