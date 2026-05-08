@@ -1,0 +1,25 @@
+name: Deploy Dual Mic to GitHub Pages
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'dual-mic/**'
+      - '.github/workflows/deploy.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Deploy dual-mic folder to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dual-mic
+          publish_branch: gh-pages
+          keep_history: true
+          allow_empty_commit: true
